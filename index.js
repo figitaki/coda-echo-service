@@ -41,6 +41,8 @@ const cache = new InMemoryCache();
 
 const client = new ApolloClient({ cache, link });
 
+const processedBlocks = [];
+
 // Queries
 
 const walletsQuery = gql`
@@ -124,6 +126,14 @@ const handleBlock = ({ data }, publicKey) => {
   }
 
   const { stateHash, transactions } = data.newBlock;
+
+  if (processedBlocks.includes(stateHash)) {
+    return;
+  } else {
+    const cacheSize = processedBlocks.push(stateHash);
+    // Keep cache to 20 elements to prevent memory leak
+    if (cacheSize > 20) processedBlocks.shift();
+  }
 
   Promise.all(
     transactions.userCommands
