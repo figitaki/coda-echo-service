@@ -10,7 +10,7 @@ const { getMainDefinition } = require("apollo-utilities");
 
 // Set up our GraphQL client
 
-const { PORT = 0xc0da, PUBLIC_KEY } = process.env;
+const { PORT = 0xc0da, PUBLIC_KEY, FEE = 5 } = process.env;
 
 const httpLink = new HttpLink({
   uri: `http://localhost:${PORT}/graphql`,
@@ -68,6 +68,25 @@ const newBlockSubscription = gql`
   }
 `;
 
+const sendPaymentMutation = gql`
+  mutation sendPayment(
+    $fee: UInt64!,
+    $amount: UInt64!,
+    $to: PublicKey!,
+    $from: PublicKey!
+  ) {
+    sendPayment(input: {
+      amount: $amount,
+      fee: $fee,
+      to: $to,
+      from: $from
+    }) {
+      payment { id }
+    }
+  }
+`
+
+
 // Handlers
 
 const extractPublicKey = ({ data }) => {
@@ -84,15 +103,17 @@ const reverseTransaction = txn =>
   client.mutate({
     mutation: sendPaymentMutation,
     variables: {
-      fee: 5,
-      amount: txn.amount - 5,
+      fee: FEE,
+      amount: txn.amount - FEE,
       to: txn.from,
       from: txn.to
     }
+  }).then(({ data }) => {
+    console.log('Sent transaction');
+    console.log(data.sendPayment);
   });
 
 const handleBlock = ({ data }, publicKey) => {
-  console.log(data);
   if (!data.newBlock.transactions) {
     return;
   }
@@ -100,7 +121,9 @@ const handleBlock = ({ data }, publicKey) => {
   const { stateHash, transactions } = data.newBlock;
 
   Promise.all(
-    transactions.filter(txn => txn.to === publicKey).map(reverseTransaction)
+    transactions.userCommands
+      .filter(txn => txn.to === publicKey)
+      .map(reverseTransaction)
   )
     .then(() => console.log(`Successfully processed block ${stateHash}`))
     .catch(console.error);
