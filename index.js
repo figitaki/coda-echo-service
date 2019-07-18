@@ -93,11 +93,11 @@ const reverseTransaction = txn =>
 
 const handleBlock = ({ data }, publicKey) => {
   console.log(data);
-  if (!data.newBlock) {
+  if (!data.newBlock.transactions) {
     return;
   }
 
-  const { stateHash, transactions } = data.newBlocks;
+  const { stateHash, transactions } = data.newBlock;
 
   Promise.all(
     transactions.filter(txn => txn.to === publicKey).map(reverseTransaction)
