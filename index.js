@@ -81,11 +81,16 @@ const sendPaymentMutation = gql`
       to: $to,
       from: $from
     }) {
-      payment { id }
+      payment {
+        id
+        from
+        to
+        amount
+        fee
+      }
     }
   }
 `
-
 
 // Handlers
 
