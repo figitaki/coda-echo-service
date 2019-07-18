@@ -72,17 +72,12 @@ const newBlockSubscription = gql`
 
 const sendPaymentMutation = gql`
   mutation sendPayment(
-    $fee: UInt64!,
-    $amount: UInt64!,
-    $to: PublicKey!,
+    $fee: UInt64!
+    $amount: UInt64!
+    $to: PublicKey!
     $from: PublicKey!
   ) {
-    sendPayment(input: {
-      amount: $amount,
-      fee: $fee,
-      to: $to,
-      from: $from
-    }) {
+    sendPayment(input: { amount: $amount, fee: $fee, to: $to, from: $from }) {
       payment {
         id
         from
@@ -92,7 +87,7 @@ const sendPaymentMutation = gql`
       }
     }
   }
-`
+`;
 
 // Handlers
 
@@ -107,18 +102,20 @@ const extractPublicKey = ({ data }) => {
 };
 
 const reverseTransaction = txn =>
-  client.mutate({
-    mutation: sendPaymentMutation,
-    variables: {
-      fee: FEE,
-      amount: txn.amount - FEE,
-      to: txn.from,
-      from: txn.to
-    }
-  }).then(({ data }) => {
-    console.log('Sent transaction');
-    console.log(data.sendPayment);
-  });
+  client
+    .mutate({
+      mutation: sendPaymentMutation,
+      variables: {
+        fee: FEE,
+        amount: txn.amount - FEE,
+        to: txn.from,
+        from: txn.to
+      }
+    })
+    .then(({ data }) => {
+      console.log("Sent transaction");
+      console.log(data.sendPayment);
+    });
 
 const handleBlock = ({ data }, publicKey) => {
   if (!data.newBlock.transactions) {
